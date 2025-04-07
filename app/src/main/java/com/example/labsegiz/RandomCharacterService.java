@@ -17,6 +17,17 @@ public class RandomCharacterService extends Service {
 
     public static final String ACTION_TAG = "my.custom.action.tag.lab6";
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Toast.makeText(getApplicationContext(), "Service Started", Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "Service started...");
+
+        isRandomGeneratorOn = true;
+
+        new Thread(this::startRandomGenerator).start();
+
+        return START_STICKY;
+    }
 
     private void startRandomGenerator() {
         while (isRandomGeneratorOn) {

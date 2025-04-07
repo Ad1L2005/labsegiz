@@ -4,6 +4,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.os.Build;
 import android.os.IBinder;
@@ -18,6 +19,33 @@ public class MyService extends Service {
     private static final String CHANNEL_ID = "foreground_service_channel";
     private NotificationManager notificationManager;
 
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        try {
+            AssetFileDescriptor afd = getResources().openRawResourceFd(R.raw.song);
+            if (afd == null) {
+                Log.e("MyService", "Audio file not found in res/raw.");
+                stopSelf();
+                return;
+            }
+
+            soundPlayer = new MediaPlayer();
+            soundPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+            afd.close();
+            soundPlayer.prepare();
+            soundPlayer.setLooping(true);
+
+            Log.i("MyService", "MediaPlayer initialized. Duration = " + soundPlayer.getDuration());
+
+            soundPlayer.start();
+        } catch (Exception e) {
+            Log.e("MyService", "Error initializing MediaPlayer: ", e);
+            Toast.makeText(this, "Ошибка запуска музыки", Toast.LENGTH_SHORT).show();
+            stopSelf();
+        }
+    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -44,7 +72,6 @@ public class MyService extends Service {
 
         startForeground(1, builder.build());
 
-        // Убеждаемся, что музыка продолжает играть
         try {
             if (soundPlayer != null && !soundPlayer.isPlaying()) {
                 soundPlayer.start();
